@@ -12,8 +12,8 @@ resources:
   properties:
     network: $(ref.securenetwork.selfLink)
     privateIpGoogleAccess: false
-    ipCidrRange: 10.1.199.0/24
-    region: us-central1
+    ipCidrRange: {{ properties["private_subnet"] }}
+    region: {{ properties["region"] }}
 
 - type: compute.v1.instance
   name: vm-bastionhost
@@ -42,7 +42,7 @@ resources:
   name: vm-securehost
   properties:
     tags:
-      items: ["rdp", "iis"]
+      items: ["rdp"]
     zone: {{ properties["zone"] }}
     machineType: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/zones/{{ properties["zone"] }}/machineTypes/n1-standard-2
     disks:
@@ -76,11 +76,15 @@ resources:
       ports: ["3389"]
 
 - type: compute.v1.firewall
-  name: securenetwork-iis
+  name: securenetwork-allow-all-internal
   properties:
     network: $(ref.securenetwork.selfLink)
-    targetTags: ["iis"]
-    sourceRanges: ["0.0.0.0/0"]
+    sourceRanges: ["{{ properties["private_subnet"] }}"]
     allowed: 
     - IPProtocol: TCP
-      ports: ["80", "443"]
+      ports: ["0-65535"]
+    - IPProtocol: UDP
+      ports: ["0-65535"]
+    - IPProtocol: ICMP
+
+

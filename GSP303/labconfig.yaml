@@ -7,3 +7,4 @@ resources:
   properties:
     region: us-central1
     zone: us-central1-a
+    private_subnet: "10.1.199.0/24"
