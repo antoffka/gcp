@@ -1,9 +1,9 @@
 imports:
-- path: resources.jinja.yaml
+- path: resources.jinja
 
 resources:
 - name: gsp303
-  type: resources.jinja.yaml
+  type: resources.jinja
   properties:
     region: us-central1
     zone: us-central1-a
