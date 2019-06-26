@@ -1,0 +1,14 @@
+info:
+  title: Deploy gsp303
+  author: antoffka
+
+required:
+  - zone
+
+properties:
+  region:
+    description: Region to create the resources in.
+    type: string
+  zone:
+    description: Zone to create the resources in.
+    type: string
