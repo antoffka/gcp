@@ -19,7 +19,7 @@ resources:
   name: vm-bastionhost
   properties:
     tags:
-      items: ["rdp"]
+      items: ["bastion"]
     zone: {{ properties["zone"] }}
     machineType: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/zones/{{ properties["zone"] }}/machineTypes/n1-standard-2
     disks:
@@ -41,8 +41,6 @@ resources:
 - type: compute.v1.instance
   name: vm-securehost
   properties:
-    tags:
-      items: ["rdp"]
     zone: {{ properties["zone"] }}
     machineType: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/zones/{{ properties["zone"] }}/machineTypes/n1-standard-2
     disks:
@@ -66,9 +64,9 @@ resources:
           echo '<!doctype html><html><body><h1>Hello World!</h1></body></html>' > C:\inetpub\wwwroot\index.html
 
 - type: compute.v1.firewall
-  name: securenetwork-rdp
+  name: securenetwork-rdp-bastion
   properties:
-    targetTags: ["rdp"]
+    targetTags: ["bastion"]
     network: $(ref.securenetwork.selfLink)
     sourceRanges: ["0.0.0.0/0"]
     allowed: 
