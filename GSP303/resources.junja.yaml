@@ -1,0 +1,86 @@
+
+resources:
+- type: compute.v1.network
+  name: securenetwork
+  properties:
+    routingConfig:
+      routingMode: "REGIONAL"
+    autoCreateSubnetworks: false
+
+- type: compute.v1.subnetwork
+  name: securesubnetwork
+  properties:
+    network: $(ref.securenetwork.selfLink)
+    privateIpGoogleAccess: false
+    ipCidrRange: 10.1.199.0/24
+    region: us-central1
+
+- type: compute.v1.instance
+  name: vm-bastionhost
+  properties:
+    tags:
+      items: ["rdp"]
+    zone: {{ properties["zone"] }}
+    machineType: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/zones/{{ properties["zone"] }}/machineTypes/n1-standard-2
+    disks:
+    - deviceName: boot
+      type: PERSISTENT
+      boot: true
+      autoDelete: true
+      initializeParams:
+        diskName: {{ env["deployment"] }}-bastion
+        sourceImage: https://www.googleapis.com/compute/v1/projects/windows-cloud/global/images/family/windows-2016
+    networkInterfaces:
+    - network: $(ref.securenetwork.selfLink)
+      subnetwork: $(ref.securesubnetwork.selfLink)
+      accessConfigs:
+      - name: External NAT
+        type: ONE_TO_ONE_NAT
+    - network: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/global/networks/default
+
+- type: compute.v1.instance
+  name: vm-securehost
+  properties:
+    tags:
+      items: ["rdp", "iis"]
+    zone: {{ properties["zone"] }}
+    machineType: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/zones/{{ properties["zone"] }}/machineTypes/n1-standard-2
+    disks:
+    - deviceName: boot
+      type: PERSISTENT
+      boot: true
+      autoDelete: true
+      initializeParams:
+        diskName: {{ env["deployment"] }}-iis
+        sourceImage: https://www.googleapis.com/compute/v1/projects/windows-cloud/global/images/family/windows-2016
+    networkInterfaces:
+    - network: $(ref.securenetwork.selfLink)
+      subnetwork: $(ref.securesubnetwork.selfLink)
+    - network: https://www.googleapis.com/compute/v1/projects/{{ env["project"] }}/global/networks/default
+    metadata:
+      items:
+      - key: startup-script
+        value: | 
+          import-module servermanager
+          add-windowsfeature web-server -includeallsubfeature
+          echo '<!doctype html><html><body><h1>Hello World!</h1></body></html>' > C:\inetpub\wwwroot\index.html
+
+- type: compute.v1.firewall
+  name: securenetwork-rdp
+  properties:
+    targetTags: ["rdp"]
+    network: $(ref.securenetwork.selfLink)
+    sourceRanges: ["0.0.0.0/0"]
+    allowed: 
+    - IPProtocol: TCP
+      ports: ["3389"]
+
+- type: compute.v1.firewall
+  name: securenetwork-iis
+  properties:
+    network: $(ref.securenetwork.selfLink)
+    targetTags: ["iis"]
+    sourceRanges: ["0.0.0.0/0"]
+    allowed: 
+    - IPProtocol: TCP
+      ports: ["80", "443"]
